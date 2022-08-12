@@ -1,3 +1,6 @@
-﻿// See https://aka.ms/new-console-template for more information
+﻿using Infrastructure.SocketFactory;
 
-Console.WriteLine("Hello, World!");
+Console.WriteLine("Starting ChatService-Client");
+var client = new SocketFactory().CreateClient();
+client.Initialize();
+client.Start();
