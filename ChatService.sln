@@ -6,6 +6,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Client", "Client\Client.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Infrastructure", "Infrastructure\Infrastructure.csproj", "{58899BD5-9B66-4B83-91F2-800A14F58A03}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{C482D1DB-B14F-4B56-8359-26B57970D66A}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{A67D0F7A-230A-41B5-9713-F5CD7C6F50C6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -24,5 +28,10 @@ Global
 		{58899BD5-9B66-4B83-91F2-800A14F58A03}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{58899BD5-9B66-4B83-91F2-800A14F58A03}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{58899BD5-9B66-4B83-91F2-800A14F58A03}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{915866C4-CE61-4D64-BACC-B15F42DBF526} = {C482D1DB-B14F-4B56-8359-26B57970D66A}
+		{58899BD5-9B66-4B83-91F2-800A14F58A03} = {C482D1DB-B14F-4B56-8359-26B57970D66A}
+		{F64F811E-1FED-4FE2-9271-3D96DAD44A7E} = {C482D1DB-B14F-4B56-8359-26B57970D66A}
 	EndGlobalSection
 EndGlobal
