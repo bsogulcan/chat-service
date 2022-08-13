@@ -45,7 +45,6 @@ public class ClientSocket : SocketWrapper
     public override void Start()
     {
         Socket = new Socket(IpAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-
         // Starting connection process
         Connect();
 
@@ -66,6 +65,10 @@ public class ClientSocket : SocketWrapper
         {
             // Waiting input from console
             var message = Console.ReadLine();
+            if (string.IsNullOrEmpty(message))
+            {
+                continue;
+            }
 
             // Send input to the server
             Send(Socket, message);
@@ -177,13 +180,15 @@ public class ClientSocket : SocketWrapper
             if (bytesRead > 0)
             {
                 // There might be more data, so store the data received so far.  
-                var rawData = Encoding.ASCII.GetString(state.Buffer, 0, bytesRead);
-                state.Content = new MessageContent()
-                {
-                    Message = rawData
-                };
+                var response = Encoding.ASCII.GetString(state.Buffer, 0, bytesRead);
+                Console.WriteLine(response);
 
                 _receiveDone.Set();
+
+                if (response.Contains("Kicked"))
+                {
+                    Environment.Exit(0);
+                }
 
                 // Get the rest of the data.  
                 client.BeginReceive(state.Buffer, 0, state.BufferSize, 0,

@@ -14,11 +14,13 @@ public class ServerSocket : SocketWrapper
     #endregion
 
     private readonly List<MessageContent> _messageHistory;
+    private readonly List<ClientStatus> _clientStatus;
 
     public ServerSocket()
     {
         _allDone = new ManualResetEvent(false);
         _messageHistory = new List<MessageContent>();
+        _clientStatus = new List<ClientStatus>();
     }
 
     public override void Start()
@@ -38,7 +40,7 @@ public class ServerSocket : SocketWrapper
 
         while (true)
         {
-            // Set the event to nonsignaled state.  
+            // Set the event to non signaled state.  
             _allDone.Reset();
 
             // Start an asynchronous socket to listen for connections.  
@@ -88,10 +90,7 @@ public class ServerSocket : SocketWrapper
             Socket handler = (Socket) ar.AsyncState;
 
             // Complete sending the data to the remote device.  
-            int bytesSent = handler.EndSend(ar);
-            //Console.WriteLine("Sent {0} bytes to client.", bytesSent);
-            //handler.Shutdown(SocketShutdown.Both);
-            //handler.Close();
+            handler.EndSend(ar);
         }
         catch (Exception e)
         {
@@ -107,23 +106,82 @@ public class ServerSocket : SocketWrapper
         Socket handler = state.WorkSocket;
 
         // Read data from the client socket.
-        int bytesRead = handler.EndReceive(ar);
+        var bytesRead = handler.EndReceive(ar);
 
-        if (bytesRead > 0)
+        if (bytesRead <= 0) return;
+
+        // Read bytes from the server
+        var rawData = Encoding.ASCII.GetString(state.Buffer, 0, bytesRead);
+
+        state.Content = JsonConvert.DeserializeObject<MessageContent>(rawData);
+        Console.WriteLine("Read data from socket : {0}", rawData);
+
+        // Checking clients messages for Dangerous requests
+        CheckClientHistory(handler, state);
+
+        // Taking message log for each client
+        _messageHistory.Add(state.Content);
+
+        if (handler.Connected)
         {
-            // Read bytes from the server
-            var rawData = Encoding.ASCII.GetString(state.Buffer, 0, bytesRead);
-
-            state.Content = JsonConvert.DeserializeObject<MessageContent>(rawData);
-            Console.WriteLine("Read data from socket : {0}", rawData);
-
-            // Taking message log for each client
-            _messageHistory.Add(state.Content);
-
-            // Echo the data back to the client.  
-            Send(handler, state.Content.Message);
-
             handler.BeginReceive(state.Buffer, 0, state.BufferSize, 0, Receive, state);
         }
+    }
+
+    private void CheckClientHistory(Socket handler, MessageDto messageDto)
+    {
+        var clientStatus = GetClientStatus(messageDto.Content.ClientId);
+
+        var recentMessage = _messageHistory.Where(x => x.ClientId == messageDto.Content.ClientId)
+            .OrderByDescending(x => x.DateTime).FirstOrDefault();
+        if (recentMessage != null)
+        {
+            TimeSpan ts = messageDto.Content.DateTime - recentMessage.DateTime;
+            var differenceSecondWithLastMessage = ts.TotalSeconds;
+            if (differenceSecondWithLastMessage <= 10)
+            {
+                if (!clientStatus.IsDangerous())
+                {
+                    // Sending Warning message to client  
+                    Send(handler, "Warning! Sending too much Messages per seconds.");
+                    clientStatus.SetDangerous();
+                }
+                else
+                {
+                    // Shutdown current client connection
+                    Console.WriteLine(
+                        $"Shutdown '{messageDto.Content.ClientId}' client connection cause of sending too much messages against warning.");
+
+                    Send(handler, "You were kicked out of the server for making too many requests.");
+
+                    // Remove current client
+                    _clientStatus.Remove(clientStatus);
+
+                    // Dispose connection
+                    handler.Shutdown(SocketShutdown.Both);
+                    handler.Close();
+                }
+            }
+            else
+            {
+                Send(handler, "OK!");
+            }
+        }
+        else
+        {
+            Send(handler, "OK!");
+        }
+    }
+
+    private ClientStatus GetClientStatus(Guid clientId)
+    {
+        var clientStatus = _clientStatus.FirstOrDefault(x => x.ClientId == clientId);
+
+        if (clientStatus != null) return clientStatus;
+
+        clientStatus = new ClientStatus(clientId);
+        _clientStatus.Add(clientStatus);
+
+        return clientStatus;
     }
 }
