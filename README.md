@@ -21,4 +21,4 @@ dotnet test .\ChatService.sln
 ```
 ### Demo
 
-<video src='https://github.com/bsogulcan/chat-service/blob/main/docs/Demo.mp4' width=180/>
+<video src='./docs/Demo.mp4' width=180/>
