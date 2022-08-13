@@ -104,4 +104,30 @@ public class InfrastructureTest
         Assert.AreEqual(client.LastResponseFromServer,
             "You were kicked out of the server for making too many requests.");
     }
+
+    [Test]
+    public void Infrastructure_WhenClientSendingMessageAfterWarningMessage_ShouldServerChangedDangerousStatusToFalse()
+    {
+        //var port = PortManager.GetNextUnusedPort(4567, 5000);
+        var server = _socketFactory.CreateServer();
+        server.Initialize(5100);
+        server.Start(false);
+
+        var client = _socketFactory.CreateClient();
+        client.Initialize(5100);
+        client.Start(false);
+
+        client.SendMessage("First message");
+        client.SendMessage("Second message");
+
+        // Waiting for the warning.
+        Thread.Sleep(1300);
+        client.SendMessage("I'll send more messages!");
+
+        // I have to sleep thread one sec because of server processing that client is dangerous or not 
+        // and sending message to client.
+        Thread.Sleep(1000);
+
+        Assert.AreEqual(client.LastResponseFromServer, "OK!");
+    }
 }
