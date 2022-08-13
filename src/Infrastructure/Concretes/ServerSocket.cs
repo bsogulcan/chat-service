@@ -7,7 +7,19 @@ namespace Infrastructure.Concretes;
 
 public class ServerSocket : SocketWrapper
 {
-    private readonly ManualResetEvent _allDone = new(false);
+    #region ManuelResetEvent properties for event management
+
+    private readonly ManualResetEvent _allDone;
+
+    #endregion
+
+    private readonly List<MessageContent> _messageHistory;
+
+    public ServerSocket()
+    {
+        _allDone = new ManualResetEvent(false);
+        _messageHistory = new List<MessageContent>();
+    }
 
     public override void Start()
     {
@@ -16,6 +28,7 @@ public class ServerSocket : SocketWrapper
 
         Socket.Bind(IpEndPoint);
         Socket.Listen(1000);
+
         WaitForClients();
     }
 
@@ -29,9 +42,7 @@ public class ServerSocket : SocketWrapper
             _allDone.Reset();
 
             // Start an asynchronous socket to listen for connections.  
-            Socket.BeginAccept(
-                AcceptCallback,
-                Socket);
+            Socket.BeginAccept(AcceptCallback, Socket);
 
             // Wait until a connection is made before continuing.  
             _allDone.WaitOne();
@@ -42,7 +53,7 @@ public class ServerSocket : SocketWrapper
     {
         // Signal the main thread to continue.  
         _allDone.Set();
-        
+
         Console.WriteLine("Client Connected!");
 
         // Get the socket that handles the client request.  
@@ -90,8 +101,6 @@ public class ServerSocket : SocketWrapper
 
     private void Receive(IAsyncResult ar)
     {
-        String content = String.Empty;
-
         // Retrieve the state object and the handler socket  
         // from the asynchronous state object.  
         MessageDto state = (MessageDto) ar.AsyncState;
@@ -102,21 +111,19 @@ public class ServerSocket : SocketWrapper
 
         if (bytesRead > 0)
         {
-            // There  might be more data, so store the data received so far.  
-            var rawData = Encoding.ASCII.GetString(
-                state.Buffer, 0, bytesRead);
-            state.MessageContent = JsonConvert.DeserializeObject<MessageContent>(rawData);
+            // Read bytes from the server
+            var rawData = Encoding.ASCII.GetString(state.Buffer, 0, bytesRead);
 
-            // Check for end-of-file tag. If it is not there, read
-            // more data.  
-            // All the data has been read from the
-            // client. Display it on the console.  
+            state.Content = JsonConvert.DeserializeObject<MessageContent>(rawData);
             Console.WriteLine("Read data from socket : {0}", rawData);
-            // Echo the data back to the client.  
-            Send(handler, state.MessageContent.Message);
 
-            handler.BeginReceive(state.Buffer, 0, state.BufferSize, 0,
-                Receive, state);
+            // Taking message log for each client
+            _messageHistory.Add(state.Content);
+
+            // Echo the data back to the client.  
+            Send(handler, state.Content.Message);
+
+            handler.BeginReceive(state.Buffer, 0, state.BufferSize, 0, Receive, state);
         }
     }
 }

@@ -1,7 +1,5 @@
-﻿using System.Net.Http.Json;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using System.Text;
-using System.Text.Json.Serialization;
 using Infrastructure.Modal;
 using Newtonsoft.Json;
 
@@ -9,39 +7,73 @@ namespace Infrastructure.Concretes;
 
 public class ClientSocket : SocketWrapper
 {
-    // ManualResetEvent instances signal completion.  
-    private readonly ManualResetEvent _connectDone = new ManualResetEvent(false);
-    private readonly ManualResetEvent _sendDone = new ManualResetEvent(false);
-    private readonly ManualResetEvent _receiveDone = new ManualResetEvent(false);
-    private MessageDto _messageDto = new();
-    private Guid _clientId = Guid.NewGuid();
+    #region ManuelResetEvent properties for event management
 
+    private readonly ManualResetEvent _connectDone;
+    private readonly ManualResetEvent _sendDone;
+    private readonly ManualResetEvent _receiveDone;
+
+    #endregion
+
+    private readonly System.Timers.Timer _timer;
+
+    private readonly MessageDto _messageDto;
+    private readonly Guid _clientId;
+
+    public ClientSocket()
+    {
+        _connectDone = new ManualResetEvent(false);
+        _sendDone = new ManualResetEvent(false);
+        _receiveDone = new ManualResetEvent(false);
+
+
+        // Initialize Timer to try reconnect when connection unsuccessful
+        _timer = new System.Timers.Timer()
+        {
+            Interval = 5000,
+            Enabled = false,
+        };
+        _timer.Elapsed += (sender, args) => Connect();
+
+        _messageDto = new MessageDto();
+        _clientId = Guid.NewGuid();
+    }
+
+    /// <summary>
+    /// Start Client Connection
+    /// </summary>
     public override void Start()
     {
-        Socket = new Socket(IpAddress.AddressFamily,
-            SocketType.Stream, ProtocolType.Tcp);
-        // Connect to the remote endpoint.  
-        Socket.BeginConnect(IpEndPoint,
-            ConnectCallback, Socket);
-        _connectDone.WaitOne();
+        Socket = new Socket(IpAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+
+        // Starting connection process
+        Connect();
 
         SendMessages();
+    }
+
+    private void Connect()
+    {
+        Socket.BeginConnect(IpEndPoint, ConnectCallback, Socket);
+
+        // Waiting for connection is done
+        _connectDone.WaitOne();
     }
 
     private void SendMessages()
     {
         while (true)
         {
+            // Waiting input from console
             var message = Console.ReadLine();
-            // Send test data to the remote device.  
+
+            // Send input to the server
             Send(Socket, message);
             _sendDone.WaitOne();
 
-            // Receive the response from the remote device.  
+            // Receive the response from the server  
             Receive(Socket);
             _receiveDone.WaitOne();
-
-            // Write the response to the console.  
         }
     }
 
@@ -54,24 +86,24 @@ public class ClientSocket : SocketWrapper
 
             // Complete the connection.  
             client.EndConnect(ar);
+            _timer.Enabled = false;
 
-            Console.WriteLine("Socket connected to {0}",
-                client.RemoteEndPoint.ToString());
+            Console.WriteLine("Socket connected to {0}", client.RemoteEndPoint);
 
             // Signal that the connection has been made.  
             _connectDone.Set();
         }
-        catch (Exception e)
+        catch
         {
-            Console.WriteLine(e.ToString());
+            // Start Timer try to start connection
+            _timer.Enabled = true;
+            Console.WriteLine("Server not responding for now. Retrying in 5 seconds.");
         }
     }
-
 
     public override void Send(Socket handler, string data)
     {
         // Convert the string data to byte data using ASCII encoding.  
-
         var content = new MessageContent()
         {
             ClientId = _clientId,
@@ -80,7 +112,7 @@ public class ClientSocket : SocketWrapper
         };
         var stringifyContent = JsonConvert.SerializeObject(content);
 
-        byte[] byteData = Encoding.ASCII.GetBytes(stringifyContent);
+        var byteData = Encoding.ASCII.GetBytes(stringifyContent);
 
         // Begin sending the data to the remote device.  
         Socket.BeginSend(byteData, 0, byteData.Length, 0,
@@ -109,7 +141,7 @@ public class ClientSocket : SocketWrapper
         }
     }
 
-    public void Receive(Socket client)
+    private void Receive(Socket client)
     {
         try
         {
@@ -146,7 +178,7 @@ public class ClientSocket : SocketWrapper
             {
                 // There might be more data, so store the data received so far.  
                 var rawData = Encoding.ASCII.GetString(state.Buffer, 0, bytesRead);
-                state.MessageContent = new MessageContent()
+                state.Content = new MessageContent()
                 {
                     Message = rawData
                 };
