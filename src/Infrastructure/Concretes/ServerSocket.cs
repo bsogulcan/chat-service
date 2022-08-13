@@ -16,6 +16,12 @@ public class ServerSocket : SocketWrapper
     private readonly List<MessageContent> _messageHistory;
     private readonly List<ClientStatus> _clientStatus;
 
+    public object GetIsListening()
+    {
+        // 0 is not listening any client to connect. 1 is listening.
+        return Socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.AcceptConnection);
+    }
+
     public ServerSocket()
     {
         _allDone = new ManualResetEvent(false);
@@ -23,18 +29,20 @@ public class ServerSocket : SocketWrapper
         _clientStatus = new List<ClientStatus>();
     }
 
-    public override void Start()
+    public override void Start(bool directly = true)
     {
-        Socket = new Socket(IpAddress.AddressFamily,
-            SocketType.Stream, ProtocolType.Tcp);
+        if (Socket == null)
+        {
+            throw new NullReferenceException("Socket should be initialized.");
+        }
 
         Socket.Bind(IpEndPoint);
         Socket.Listen(1000);
 
-        WaitForClients();
+        WaitForClients(directly);
     }
 
-    private void WaitForClients()
+    private void WaitForClients(bool repeat = true)
     {
         Console.WriteLine("Waiting for a connection...");
 
@@ -47,6 +55,12 @@ public class ServerSocket : SocketWrapper
             Socket.BeginAccept(AcceptCallback, Socket);
 
             // Wait until a connection is made before continuing.  
+
+            if (!repeat)
+            {
+                break;
+            }
+            
             _allDone.WaitOne();
         }
     }

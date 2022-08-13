@@ -15,6 +15,7 @@ public class ClientSocket : SocketWrapper
 
     #endregion
 
+    public string LastResponseFromServer { get; set; }
     private readonly System.Timers.Timer _timer;
 
     private readonly MessageDto _messageDto;
@@ -39,16 +40,28 @@ public class ClientSocket : SocketWrapper
         _clientId = Guid.NewGuid();
     }
 
+    public Guid GetClientId()
+    {
+        return _clientId;
+    }
+
     /// <summary>
     /// Start Client Connection
     /// </summary>
-    public override void Start()
+    public override void Start(bool directly = true)
     {
-        Socket = new Socket(IpAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+        if (Socket == null)
+        {
+            throw new NullReferenceException("Socket should be initialized.");
+        }
+
         // Starting connection process
         Connect();
 
-        SendMessages();
+        if (directly)
+        {
+            ListenConsoleInput();
+        }
     }
 
     private void Connect()
@@ -59,25 +72,29 @@ public class ClientSocket : SocketWrapper
         _connectDone.WaitOne();
     }
 
-    private void SendMessages()
+    public void ListenConsoleInput()
     {
         while (true)
         {
             // Waiting input from console
-            var message = Console.ReadLine();
-            if (string.IsNullOrEmpty(message))
-            {
-                continue;
-            }
-
-            // Send input to the server
-            Send(Socket, message);
-            _sendDone.WaitOne();
-
-            // Receive the response from the server  
-            Receive(Socket);
-            _receiveDone.WaitOne();
+            SendMessage(Console.ReadLine());
         }
+    }
+
+    public void SendMessage(string message)
+    {
+        if (string.IsNullOrEmpty(message))
+        {
+            return;
+        }
+
+        // Send input to the server
+        Send(Socket, message);
+        _sendDone.WaitOne();
+
+        // Receive the response from the server  
+        Receive(Socket);
+        _receiveDone.WaitOne();
     }
 
     private void ConnectCallback(IAsyncResult ar)
@@ -182,6 +199,7 @@ public class ClientSocket : SocketWrapper
                 // There might be more data, so store the data received so far.  
                 var response = Encoding.ASCII.GetString(state.Buffer, 0, bytesRead);
                 Console.WriteLine(response);
+                LastResponseFromServer = response;
 
                 _receiveDone.Set();
 
