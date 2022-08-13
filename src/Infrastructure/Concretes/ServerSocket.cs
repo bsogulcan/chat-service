@@ -60,7 +60,7 @@ public class ServerSocket : SocketWrapper
             {
                 break;
             }
-            
+
             _allDone.WaitOne();
         }
     }
@@ -187,7 +187,7 @@ public class ServerSocket : SocketWrapper
         }
     }
 
-    private ClientStatus GetClientStatus(Guid clientId)
+    public ClientStatus GetClientStatus(Guid clientId)
     {
         var clientStatus = _clientStatus.FirstOrDefault(x => x.ClientId == clientId);
 

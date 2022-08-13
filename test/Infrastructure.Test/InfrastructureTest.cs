@@ -14,7 +14,7 @@ public class InfrastructureTest
     }
 
     [Test]
-    public void Infrastructure_WhenClientSendingMessageSuccessFully_ServerShouldReturnOk()
+    public void Infrastructure_WhenClientSendingMessage_ShouldServerReturnOk()
     {
         var port = PortManager.GetNextUnusedPort(4567, 5000);
 
@@ -29,13 +29,13 @@ public class InfrastructureTest
         client.SendMessage("Test");
 
         // I have to sleep thread one sec because of be sure to server send message back to client.
-        Thread.Sleep(1000);
+        Thread.Sleep(500);
 
         Assert.AreEqual(client.LastResponseFromServer, "OK!");
     }
 
     [Test]
-    public void Infrastructure_WhenClientSendingTwoMessagesSuccessFully_ServerSendWarningMessage()
+    public void Infrastructure_WhenClientSendingTwoMessages_ShouldServerSendWarningMessage()
     {
         var port = PortManager.GetNextUnusedPort(4567, 5000);
 
@@ -52,7 +52,59 @@ public class InfrastructureTest
 
         // I have to sleep thread one sec because of server processing that client is dangerous or not 
         // and sending message to client.
-        Thread.Sleep(1000);
+        Thread.Sleep(500);
         Assert.AreEqual(client.LastResponseFromServer, "Warning! Sending too much Messages per seconds.");
+    }
+
+    [Test]
+    public void Infrastructure_WhenClientSendingTwoMessages_ShouldServerChangeClientsStatusToDangerous()
+    {
+        var port = PortManager.GetNextUnusedPort(4567, 5000);
+
+        var server = _socketFactory.CreateServer();
+        server.Initialize(port);
+        server.Start(false);
+
+        var client = _socketFactory.CreateClient();
+        client.Initialize(port);
+        client.Start(false);
+
+        var clientId = client.GetClientId();
+
+        client.SendMessage("First message");
+        client.SendMessage("Second message");
+
+        // I have to sleep thread one sec because of server processing that client is dangerous or not 
+        // and sending message to client.
+        Thread.Sleep(500);
+
+        var clientStatus = server.GetClientStatus(clientId);
+
+        Assert.AreEqual(clientStatus.IsDangerous(), true);
+    }
+
+    [Test]
+    public void Infrastructure_WhenClientSendingThreeMessagesInsteadOfWarning_ShouldServerDisconnectWithClient()
+    {
+        var port = PortManager.GetNextUnusedPort(4567, 5000);
+
+        var server = _socketFactory.CreateServer();
+        server.Initialize(port);
+        server.Start(false);
+
+        var client = _socketFactory.CreateClient();
+        client.Initialize(port);
+        client.Start(false);
+
+        client.SendMessage("First message");
+        client.SendMessage("Second message");
+        client.SendMessage("I'll send more messages!");
+
+        // I have to sleep thread one sec because of server processing that client is dangerous or not 
+        // and sending message to client.
+        Thread.Sleep(500);
+
+        Assert.AreEqual(client.LastResponseFromServer,
+            "You were kicked out of the server for making too many requests.");
     }
 }
