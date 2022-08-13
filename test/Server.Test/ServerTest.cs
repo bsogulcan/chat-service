@@ -1,4 +1,5 @@
 using System;
+using Infrastructure;
 using Infrastructure.SocketFactory;
 using NUnit.Framework;
 
@@ -26,8 +27,10 @@ public class ServerTest
     [Test]
     public void Server_WhenSocketStarted_ShouldBeListeningForClients()
     {
+        //var port = PortManager.GetNextUnusedPort(4567, 5000);
+
         var server = _socketFactory.CreateServer();
-        server.Initialize();
+        server.Initialize(4999);
         server.Start(false);
         var serverStatus = server.GetIsListening();
 

@@ -37,14 +37,13 @@ public class InfrastructureTest
     [Test]
     public void Infrastructure_WhenClientSendingTwoMessages_ShouldServerSendWarningMessage()
     {
-        var port = PortManager.GetNextUnusedPort(4567, 5000);
-
+        //var port = PortManager.GetNextUnusedPort(4567, 5000);
         var server = _socketFactory.CreateServer();
-        server.Initialize(port);
+        server.Initialize(4666);
         server.Start(false);
 
         var client = _socketFactory.CreateClient();
-        client.Initialize(port);
+        client.Initialize(4666);
         client.Start(false);
 
         client.SendMessage("First message");
@@ -59,14 +58,13 @@ public class InfrastructureTest
     [Test]
     public void Infrastructure_WhenClientSendingTwoMessages_ShouldServerChangeClientsStatusToDangerous()
     {
-        var port = PortManager.GetNextUnusedPort(4567, 5000);
-
+        //var port = PortManager.GetNextUnusedPort(4567, 5000);
         var server = _socketFactory.CreateServer();
-        server.Initialize(port);
+        server.Initialize(4777);
         server.Start(false);
 
         var client = _socketFactory.CreateClient();
-        client.Initialize(port);
+        client.Initialize(4777);
         client.Start(false);
 
         var clientId = client.GetClientId();
@@ -86,14 +84,13 @@ public class InfrastructureTest
     [Test]
     public void Infrastructure_WhenClientSendingThreeMessagesInsteadOfWarning_ShouldServerDisconnectWithClient()
     {
-        var port = PortManager.GetNextUnusedPort(4567, 5000);
-
+        //var port = PortManager.GetNextUnusedPort(4567, 5000);
         var server = _socketFactory.CreateServer();
-        server.Initialize(port);
+        server.Initialize(4888);
         server.Start(false);
 
         var client = _socketFactory.CreateClient();
-        client.Initialize(port);
+        client.Initialize(4888);
         client.Start(false);
 
         client.SendMessage("First message");
