@@ -1,9 +1,8 @@
 using System;
-using Infrastructure.Concretes;
 using Infrastructure.SocketFactory;
 using NUnit.Framework;
 
-namespace ChatService.Test;
+namespace Server;
 
 public class ServerTest
 {
@@ -16,7 +15,7 @@ public class ServerTest
     }
 
     [Test]
-    public void SocketFactory_WhenSocketNotStarted_ShouldBeFalse()
+    public void Server_WhenSocketNotStarted_ShouldBeFalse()
     {
         var server = _socketFactory.CreateServer();
         var serverStatus = server.IsConnectionStarted();
@@ -25,7 +24,7 @@ public class ServerTest
     }
 
     [Test]
-    public void SocketFactory_WhenSocketStarted_ShouldBeListeningForClients()
+    public void Server_WhenSocketStarted_ShouldBeListeningForClients()
     {
         var server = _socketFactory.CreateServer();
         server.Initialize();
@@ -36,11 +35,9 @@ public class ServerTest
     }
 
     [Test]
-    public void SocketFactory_WhenSocketNotInitialized_ShouldThrowEx()
+    public void Server_WhenSocketNotInitialized_ShouldThrowEx()
     {
         var server = _socketFactory.CreateServer();
         Assert.Throws<NullReferenceException>(() => server.Start(false));
     }
-
-
 }

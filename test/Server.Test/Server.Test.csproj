@@ -5,6 +5,10 @@
         <Nullable>enable</Nullable>
 
         <IsPackable>false</IsPackable>
+
+        <AssemblyName>Server.Test</AssemblyName>
+
+        <RootNamespace>Server.Test</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>

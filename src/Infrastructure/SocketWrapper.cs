@@ -9,16 +9,15 @@ public abstract class SocketWrapper
     private IPHostEntry IpHostEntry { get; set; }
     protected IPAddress IpAddress { get; set; }
     protected IPEndPoint IpEndPoint { get; set; }
-    private int Port { get; set; } = 4567;
 
     public abstract void Start(bool directly = true);
     public abstract void Send(Socket handler, String data);
 
-    public void Initialize()
+    public void Initialize(int port = 4567)
     {
         IpHostEntry = Dns.GetHostEntry(Dns.GetHostName());
         IpAddress = IpHostEntry.AddressList[0];
-        IpEndPoint = new IPEndPoint(IpAddress, Port);
+        IpEndPoint = new IPEndPoint(IpAddress, port);
 
         Socket = new Socket(IpAddress.AddressFamily,
             SocketType.Stream, ProtocolType.Tcp);
