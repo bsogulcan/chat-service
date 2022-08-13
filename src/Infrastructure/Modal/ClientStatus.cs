@@ -10,9 +10,9 @@ public class ClientStatus
         ClientId = clientId;
     }
 
-    public void SetDangerous()
+    public void SetDangerous(bool dangerous = true)
     {
-        Dangerous = true;
+        Dangerous = dangerous;
     }
 
     public bool IsDangerous()

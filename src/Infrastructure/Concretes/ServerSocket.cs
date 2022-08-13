@@ -42,6 +42,20 @@ public class ServerSocket : SocketWrapper
         WaitForClients(directly);
     }
 
+    public ClientStatus GetClientStatus(Guid clientId)
+    {
+        var clientStatus = _clientStatus.FirstOrDefault(x => x.ClientId == clientId);
+
+        if (clientStatus != null) return clientStatus;
+
+        clientStatus = new ClientStatus(clientId);
+        _clientStatus.Add(clientStatus);
+
+        return clientStatus;
+    }
+
+    #region Private Methods
+
     private void WaitForClients(bool repeat = true)
     {
         Console.WriteLine("Waiting for a connection...");
@@ -114,31 +128,38 @@ public class ServerSocket : SocketWrapper
 
     private void Receive(IAsyncResult ar)
     {
-        // Retrieve the state object and the handler socket  
-        // from the asynchronous state object.  
-        MessageDto state = (MessageDto) ar.AsyncState;
-        Socket handler = state.WorkSocket;
-
-        // Read data from the client socket.
-        var bytesRead = handler.EndReceive(ar);
-
-        if (bytesRead <= 0) return;
-
-        // Read bytes from the server
-        var rawData = Encoding.ASCII.GetString(state.Buffer, 0, bytesRead);
-
-        state.Content = JsonConvert.DeserializeObject<MessageContent>(rawData);
-        Console.WriteLine("Read data from socket : {0}", rawData);
-
-        // Checking clients messages for Dangerous requests
-        CheckClientHistory(handler, state);
-
-        // Taking message log for each client
-        _messageHistory.Add(state.Content);
-
-        if (handler.Connected)
+        try
         {
-            handler.BeginReceive(state.Buffer, 0, state.BufferSize, 0, Receive, state);
+            // Retrieve the state object and the handler socket  
+            // from the asynchronous state object.  
+            MessageDto state = (MessageDto) ar.AsyncState;
+            Socket handler = state.WorkSocket;
+
+            // Read data from the client socket.
+            var bytesRead = handler.EndReceive(ar);
+
+            if (bytesRead <= 0) return;
+
+            // Read bytes from the server
+            var rawData = Encoding.ASCII.GetString(state.Buffer, 0, bytesRead);
+
+            state.Content = JsonConvert.DeserializeObject<MessageContent>(rawData);
+            Console.WriteLine("Read data from socket : {0}", rawData);
+
+            // Checking clients messages for Dangerous requests
+            CheckClientHistory(handler, state);
+
+            // Taking message log for each client
+            _messageHistory.Add(state.Content);
+
+            if (handler.Connected)
+            {
+                handler.BeginReceive(state.Buffer, 0, state.BufferSize, 0, Receive, state);
+            }
+        }
+        catch (SocketException e)
+        {
+            Console.WriteLine("Client disconnected from server.");
         }
     }
 
@@ -158,6 +179,7 @@ public class ServerSocket : SocketWrapper
                 {
                     // Sending Warning message to client  
                     Send(handler, "Warning! Sending too much Messages per seconds.");
+                    Console.WriteLine($"Send warning message to '{messageDto.Content.ClientId}' Client");
                     clientStatus.SetDangerous();
                 }
                 else
@@ -178,6 +200,7 @@ public class ServerSocket : SocketWrapper
             }
             else
             {
+                clientStatus.SetDangerous(false);
                 Send(handler, "OK!");
             }
         }
@@ -187,15 +210,5 @@ public class ServerSocket : SocketWrapper
         }
     }
 
-    public ClientStatus GetClientStatus(Guid clientId)
-    {
-        var clientStatus = _clientStatus.FirstOrDefault(x => x.ClientId == clientId);
-
-        if (clientStatus != null) return clientStatus;
-
-        clientStatus = new ClientStatus(clientId);
-        _clientStatus.Add(clientStatus);
-
-        return clientStatus;
-    }
+    #endregion
 }

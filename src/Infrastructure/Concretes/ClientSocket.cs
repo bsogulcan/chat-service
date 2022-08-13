@@ -27,7 +27,6 @@ public class ClientSocket : SocketWrapper
         _sendDone = new ManualResetEvent(false);
         _receiveDone = new ManualResetEvent(false);
 
-
         // Initialize Timer to try reconnect when connection unsuccessful
         _timer = new System.Timers.Timer()
         {
@@ -63,6 +62,8 @@ public class ClientSocket : SocketWrapper
             ListenConsoleInput();
         }
     }
+
+    #region Private Methods
 
     private void Connect()
     {
@@ -157,7 +158,7 @@ public class ClientSocket : SocketWrapper
         }
         catch (Exception e)
         {
-            Console.WriteLine(e.ToString());
+            Console.WriteLine("Your connection was canceled by the server.");
         }
     }
 
@@ -178,7 +179,7 @@ public class ClientSocket : SocketWrapper
         }
         catch (Exception e)
         {
-            Console.WriteLine(e.ToString());
+            //Console.WriteLine(e.ToString());
         }
     }
 
@@ -215,7 +216,9 @@ public class ClientSocket : SocketWrapper
         }
         catch (Exception e)
         {
-            Console.WriteLine(e.ToString());
+            //Console.WriteLine(e.ToString());
         }
     }
+
+    #endregion
 }
