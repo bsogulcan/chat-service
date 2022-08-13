@@ -199,15 +199,10 @@ public class ClientSocket : SocketWrapper
             {
                 // There might be more data, so store the data received so far.  
                 var response = Encoding.ASCII.GetString(state.Buffer, 0, bytesRead);
-                //Console.WriteLine(response);
+                Console.WriteLine(response);
                 LastResponseFromServer = response;
 
                 _receiveDone.Set();
-
-                if (response.Contains("Kicked"))
-                {
-                    Environment.Exit(0);
-                }
 
                 // Get the rest of the data.  
                 client.BeginReceive(state.Buffer, 0, state.BufferSize, 0,

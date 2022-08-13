@@ -174,7 +174,7 @@ public class ServerSocket : SocketWrapper
         {
             TimeSpan ts = messageDto.Content.DateTime - recentMessage.DateTime;
             var differenceSecondWithLastMessage = ts.TotalSeconds;
-            if (differenceSecondWithLastMessage <= 10)
+            if (differenceSecondWithLastMessage <= 1)
             {
                 if (!clientStatus.IsDangerous())
                 {
