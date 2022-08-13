@@ -144,7 +144,8 @@ public class ServerSocket : SocketWrapper
             var rawData = Encoding.ASCII.GetString(state.Buffer, 0, bytesRead);
 
             state.Content = JsonConvert.DeserializeObject<MessageContent>(rawData);
-            Console.WriteLine("Read data from socket : {0}", rawData);
+            Console.WriteLine(
+                $"Data Received From: {state.Content.ClientId}\nTime: {state.Content.DateTime} \nMessage: {state.Content.Message}");
 
             // Checking clients messages for Dangerous requests
             CheckClientHistory(handler, state);

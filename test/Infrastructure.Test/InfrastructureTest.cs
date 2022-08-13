@@ -52,7 +52,7 @@ public class InfrastructureTest
 
         // I have to sleep thread one sec because of server processing that client is dangerous or not 
         // and sending message to client.
-        Thread.Sleep(500);
+        Thread.Sleep(1000);
         Assert.AreEqual(client.LastResponseFromServer, "Warning! Sending too much Messages per seconds.");
     }
 
@@ -76,7 +76,7 @@ public class InfrastructureTest
 
         // I have to sleep thread one sec because of server processing that client is dangerous or not 
         // and sending message to client.
-        Thread.Sleep(500);
+        Thread.Sleep(1000);
 
         var clientStatus = server.GetClientStatus(clientId);
 
@@ -102,7 +102,7 @@ public class InfrastructureTest
 
         // I have to sleep thread one sec because of server processing that client is dangerous or not 
         // and sending message to client.
-        Thread.Sleep(500);
+        Thread.Sleep(1000);
 
         Assert.AreEqual(client.LastResponseFromServer,
             "You were kicked out of the server for making too many requests.");

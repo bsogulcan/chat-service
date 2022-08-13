@@ -199,7 +199,7 @@ public class ClientSocket : SocketWrapper
             {
                 // There might be more data, so store the data received so far.  
                 var response = Encoding.ASCII.GetString(state.Buffer, 0, bytesRead);
-                Console.WriteLine(response);
+                //Console.WriteLine(response);
                 LastResponseFromServer = response;
 
                 _receiveDone.Set();
